@@ -5,6 +5,7 @@ from app.routes.student_routes import student_bp
 from flask import Flask
 from dotenv import load_dotenv
 from app.routes.auth_routes import auth_bp
+from app.routes.attendance_routes import attendance_bp
 
 from app.database import get_db_connection
 
@@ -58,5 +59,6 @@ def create_app():
             }
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp)
+    app.register_blueprint(attendance_bp)
 
     return app
