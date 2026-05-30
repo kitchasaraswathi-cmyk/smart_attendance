@@ -1,5 +1,6 @@
 from flask_mail import Message
 from app.extensions import mail
+from app.database import get_db_connection
 
 
 def send_test_email(recipient_email):
@@ -36,6 +37,7 @@ Smart Attendance System
             "message": str(error)
         }
 def send_absentee_notification(
+    student_id,
     parent_email,
     student_name,
     attendance_date
@@ -62,9 +64,56 @@ Smart Attendance System
 
         mail.send(msg)
 
+        save_notification_log(
+            student_id,
+            parent_email,
+            "EMAIL"
+        )
+
         return True
 
     except Exception as error:
 
         print("Email Error:", error)
         return False
+def save_notification_log(
+    student_id,
+    parent_email,
+    notification_type="EMAIL"
+):
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor()
+
+        query = """
+            INSERT INTO notification_logs
+            (
+                student_id,
+                parent_email,
+                notification_type
+            )
+            VALUES (%s, %s, %s)
+        """
+
+        cursor.execute(
+            query,
+            (
+                student_id,
+                parent_email,
+                notification_type
+            )
+        )
+
+        db_conn.commit()
+
+    except Exception as error:
+
+        print("Notification Log Error:", error)
+
+    finally:
+
+        cursor.close()
+        db_conn.close()

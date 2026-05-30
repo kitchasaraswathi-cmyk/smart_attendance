@@ -65,10 +65,11 @@ def mark_attendance(data):
         if student and student["parent_email"]:
 
           send_absentee_notification(
-            student["parent_email"],
-            student["full_name"],
-            attendance_date
-        )
+    student_id,
+    student["parent_email"],
+    student["full_name"],
+    attendance_date
+)
 
         parent_cursor.close()
 
