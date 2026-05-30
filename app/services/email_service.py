@@ -35,3 +35,36 @@ Smart Attendance System
             "status": "error",
             "message": str(error)
         }
+def send_absentee_notification(
+    parent_email,
+    student_name,
+    attendance_date
+):
+
+    try:
+
+        msg = Message(
+            subject="Attendance Alert",
+            recipients=[parent_email]
+        )
+
+        msg.body = f"""
+Dear Parent,
+
+This is to inform you that your child {student_name}
+was marked absent on {attendance_date}.
+
+Please contact the school if you need further information.
+
+Regards,
+Smart Attendance System
+"""
+
+        mail.send(msg)
+
+        return True
+
+    except Exception as error:
+
+        print("Email Error:", error)
+        return False
