@@ -1,4 +1,5 @@
 from app.database import get_db_connection
+from app.services.email_service import send_absentee_notification
 
 
 def mark_attendance(data):
@@ -42,14 +43,43 @@ def mark_attendance(data):
 
         db_conn.commit()
 
+        db_conn.commit()
+
+        if status.lower() == "absent":
+
+         parent_cursor = db_conn.cursor(dictionary=True)
+
+        parent_cursor.execute(
+        """
+        SELECT
+            full_name,
+            parent_email
+        FROM students
+        WHERE id = %s
+        """,
+         (student_id,)
+        )
+
+        student = parent_cursor.fetchone()
+
+        if student and student["parent_email"]:
+
+          send_absentee_notification(
+            student["parent_email"],
+            student["full_name"],
+            attendance_date
+        )
+
+        parent_cursor.close()
+
         return {
-            "status": "success",
-            "message": "Attendance marked successfully"
-        }
+        "status": "success",
+           "message": "Attendance marked successfully"
+         }
 
     except Exception as error:
 
-        return {
+           return {
             "status": "error",
             "message": str(error)
         }
