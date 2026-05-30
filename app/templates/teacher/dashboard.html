@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance Dashboard</title>
+
+```
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+```
+
+</head>
+
+<body>
+
+```
+<div class="sidebar">
+
+    <h2>SAS</h2>
+
+    <ul>
+        <li>Dashboard</li>
+        <li>Students</li>
+        <li>Attendance</li>
+        <li>Reports</li>
+        <li>Notifications</li>
+        <li>Logout</li>
+    </ul>
+
+</div>
+
+<div class="main-content">
+
+    <h1>Smart Attendance Dashboard</h1>
+
+    <div class="cards">
+
+        <div class="card students">
+            <h3>Total Students</h3>
+            <p id="totalStudents">0</p>
+        </div>
+
+        <div class="card present">
+            <h3>Present Today</h3>
+            <p id="presentToday">0</p>
+        </div>
+
+        <div class="card absent">
+            <h3>Absent Today</h3>
+            <p id="absentToday">0</p>
+        </div>
+
+        <div class="card emails">
+            <h3>Emails Sent</h3>
+            <p id="emailsSent">0</p>
+        </div>
+
+    </div>
+
+    <div class="charts">
+
+        <div class="chart-box">
+            <canvas id="attendanceChart"></canvas>
+        </div>
+
+        <div class="chart-box">
+            <canvas id="attendanceBarChart"></canvas>
+        </div>
+
+    </div>
+
+    <div class="table-section">
+
+        <h2>Recent Absentees</h2>
+
+        <table id="absenteesTable">
+
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Roll No</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+
+            <tbody></tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<script
+    src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+```
+
+</body>
+
+</html>

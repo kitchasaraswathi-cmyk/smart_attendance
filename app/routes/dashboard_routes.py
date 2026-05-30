@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, render_template
 from app.services.dashboard_service import get_dashboard_stats
 from app.services.email_service import fetch_notification_logs
 
@@ -27,3 +27,9 @@ def notification_logs():
     result = fetch_notification_logs()
 
     return jsonify(result)
+
+@dashboard_bp.route('/teacher-dashboard')
+def teacher_dashboard():
+    return render_template(
+        'teacher/dashboard.html'
+    )
