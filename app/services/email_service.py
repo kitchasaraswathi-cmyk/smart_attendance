@@ -117,3 +117,43 @@ def save_notification_log(
 
         cursor.close()
         db_conn.close()
+
+def fetch_notification_logs():
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor(dictionary=True)
+
+        query = """
+            SELECT
+                id,
+                student_id,
+                parent_email,
+                notification_type,
+                sent_at
+            FROM notification_logs
+            ORDER BY sent_at DESC
+        """
+
+        cursor.execute(query)
+
+        logs = cursor.fetchall()
+
+        return {
+            "status": "success",
+            "logs": logs
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+    finally:
+
+        cursor.close()
+        db_conn.close()
