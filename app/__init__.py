@@ -8,6 +8,9 @@ from app.routes.auth_routes import auth_bp
 from app.routes.attendance_routes import attendance_bp
 
 from app.database import get_db_connection
+from flask_mail import Mail
+
+mail = Mail()
 
 load_dotenv()
 
@@ -23,6 +26,11 @@ def create_app():
         "password": os.getenv('DB_PASSWORD'),
         "database": os.getenv('DB_NAME')
     }
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
     
 
     @app.route('/')
@@ -60,5 +68,6 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(attendance_bp)
+    mail.init_app(app)
 
     return app
