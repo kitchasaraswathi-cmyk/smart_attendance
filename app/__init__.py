@@ -8,9 +8,7 @@ from app.routes.auth_routes import auth_bp
 from app.routes.attendance_routes import attendance_bp
 
 from app.database import get_db_connection
-from flask_mail import Mail
-
-mail = Mail()
+from app.extensions import mail
 
 load_dotenv()
 
