@@ -72,3 +72,37 @@ def get_dashboard_stats():
 
         cursor.close()
         db_conn.close()
+
+def get_notification_count():
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor()
+
+        query = """
+            SELECT COUNT(*)
+            FROM notification_logs
+        """
+
+        cursor.execute(query)
+
+        count = cursor.fetchone()[0]
+
+        return {
+            "status": "success",
+            "count": count
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+    finally:
+
+        cursor.close()
+        db_conn.close()

@@ -1,105 +1,174 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Attendance Dashboard</title>
-
-```
-<link rel="stylesheet"
-    href="{{ url_for('static', filename='css/dashboard.css') }}">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-```
-
+    <title>SAS - Instructor Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
-```
-<div class="sidebar">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="bi bi-shield-check"></i>
+            <h2>SAS</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="active"><a href="/teacher-dashboard"><i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span></a></li>
+            <li><a href="/teacher/students"><i class="bi bi-people-fill"></i> <span>Students</span></a></li>
+            <li><a href="/teacher/attendance"><i class="bi bi-calendar-check-fill"></i> <span>Attendance</span></a></li>
+            <li><a href="/teacher/reports"><i class="bi bi-file-earmark-bar-graph-fill"></i> <span>Reports Log</span></a></li>
+            <li style="margin-top: auto;"><a href="/logout" class="logout-btn-item"><i class="bi bi-box-arrow-left"></i> <span>Sign Out</span></a></li>
+        </ul>
+    </aside>
 
-    <h2>SAS</h2>
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="dashboardSearchInput" placeholder="Filter active tables rows...">
+            </div>
+            <div class="topbar-right">
+                <div class="notification-trigger">
+                    <i class="bi bi-bell"></i>
+                    <span class="badge" id="notificationBadge">0</span>
+                </div>
+                <div class="profile-container">
+                    <div class="profile-pill" id="profilePillTrigger">
+                        <div class="avatar"><i class="bi bi-person-workspace"></i></div>
+                        <span class="profile-name">Instructor Panel</span>
+                        <i class="bi bi-chevron-down arrow-icon"></i>
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdownMenu">
+                        <div class="dropdown-header"><p class="user-role">Faculty Account</p></div>
+                        <hr>
+                        <a href="/logout" class="dropdown-item text-danger"><i class="bi bi-box-arrow-left"></i> Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-    <ul>
-        <li>Dashboard</li>
-        <li>Students</li>
-        <li>Attendance</li>
-        <li>Reports</li>
-        <li>Notifications</li>
-        <li>Logout</li>
-    </ul>
-
-</div>
-
-<div class="main-content">
-
-    <h1>Smart Attendance Dashboard</h1>
-
-    <div class="cards">
-
-        <div class="card students">
-            <h3>Total Students</h3>
-            <p id="totalStudents">0</p>
+        <div class="welcome-banner">
+            <h1>Dynamic Faculty Command Center</h1>
+            <p>Real-time analytics stream connected directly to live student registration records and parent notification logs.</p>
         </div>
 
-        <div class="card present">
-            <h3>Present Today</h3>
-            <p id="presentToday">0</p>
+        <div class="metrics-grid">
+            <div class="metric-card students">
+                <div class="card-header-set"><span>Total Enrollment</span><div class="card-icon"><i class="bi bi-people"></i></div></div>
+                <p class="card-value" id="totalStudents">—</p>
+            </div>
+            <div class="metric-card present">
+                <div class="card-header-set"><span>Present Today</span><div class="card-icon"><i class="bi bi-person-check"></i></div></div>
+                <p class="card-value" id="presentToday">—</p>
+            </div>
+            <div class="metric-card absent">
+                <div class="card-header-set"><span>Absent Today</span><div class="card-icon"><i class="bi bi-person-x"></i></div></div>
+                <p class="card-value" id="absentToday">—</p>
+            </div>
+            <div class="metric-card emails">
+                <div class="card-header-set"><span>Alerts Dispatched</span><div class="card-icon"><i class="bi bi-envelope-check"></i></div></div>
+                <p class="card-value" id="emailsSent">—</p>
+            </div>
         </div>
 
-        <div class="card absent">
-            <h3>Absent Today</h3>
-            <p id="absentToday">0</p>
+        <div class="charts-grid">
+            <div class="chart-wrapper"><canvas id="attendanceDoughnut"></canvas></div>
+            <div class="chart-wrapper"><canvas id="attendanceBar"></canvas></div>
         </div>
 
-        <div class="card emails">
-            <h3>Emails Sent</h3>
-            <p id="emailsSent">0</p>
-        </div>
+        <section class="ui-panel">
+            <div class="panel-title-bar"><h2>Immediate Absentee Trace Map Log</h2></div>
+            <div class="table-responsive">
+                <table id="absenteesTable">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Roll Number</th>
+                            <th>Target Class</th>
+                            <th>Primary Guardian Contact</th>
+                            <th>Date of Absence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Syncing live datastream records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 
-    </div>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchMetricsData();
+            fetchAbsenteesLog();
+        });
 
-    <div class="charts">
+        async function fetchMetricsData() {
+            try {
+                const res = await fetch('/dashboard-stats');
+                const data = await res.json();
+                if (data.status === "success") {
+                    document.getElementById("totalStudents").textContent = data.total_students;
+                    document.getElementById("presentToday").textContent = data.present_today;
+                    document.getElementById("absentToday").textContent = data.absent_today;
+                    document.getElementById("emailsSent").textContent = data.emails_sent_today;
+                    
+                    renderCharts(data.present_today, data.absent_today, data.emails_sent_today);
+                }
+            } catch (err) { console.error("Metrics sync drop:", err); }
+        }
 
-        <div class="chart-box">
-            <canvas id="attendanceChart"></canvas>
-        </div>
+        async function fetchAbsenteesLog() {
+            try {
+                const res = await fetch('/absentees');
+                const data = await res.json();
+                const tbody = document.querySelector("#absenteesTable tbody");
+                tbody.innerHTML = "";
 
-        <div class="chart-box">
-            <canvas id="attendanceBarChart"></canvas>
-        </div>
+                if (data.status === "success") {
+                    if (data.absentees.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No student absences recorded today.</td></tr>`;
+                        return;
+                    }
+                    data.absentees.forEach(s => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td><strong>${s.full_name}</strong></td>
+                            <td><code>${s.roll_number}</code></td>
+                            <td>${s.class_name}</td>
+                            <td>${s.parent_email}</td>
+                            <td><span class="badge-pill danger">${formatSystemDate(s.attendance_date)}</span></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (err) { console.error("Absentee array resolve error:", err); }
+        }
 
-    </div>
+        function renderCharts(present, absent, emails) {
+            const ctx1 = document.getElementById("attendanceDoughnut").getContext('2m');
+            new Chart(document.getElementById("attendanceDoughnut"), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Present Today', 'Absent Today'],
+                    datasets: [{ data: [present, absent], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
+            });
 
-    <div class="table-section">
-
-        <h2>Recent Absentees</h2>
-
-        <table id="absenteesTable">
-
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Roll No</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-
-            <tbody></tbody>
-
-        </table>
-
-    </div>
-
-</div>
-
-<script
-    src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-```
-
+            new Chart(document.getElementById("attendanceBar"), {
+                type: 'bar',
+                data: {
+                    labels: ['Present', 'Absent', 'Alerts Dispatched'],
+                    datasets: [{ data: [present, absent, emails], backgroundColor: ['#3b82f6', '#f43f5e', '#f59e0b'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+    </script>
 </body>
-
 </html>

@@ -1,161 +1,93 @@
-// Dashboard Statistics
+/**
+ * Smart Attendance System (SAS) - Core Shared Client Component Orchestrator
+ */
 
-fetch('/dashboard-stats')
-.then(response => response.json())
-.then(data => {
-
-```
-    document.getElementById("totalStudents").innerText =
-        data.total_students;
-
-    document.getElementById("presentToday").innerText =
-        data.present_today;
-
-    document.getElementById("absentToday").innerText =
-        data.absent_today;
-
-    document.getElementById("emailsSent").innerText =
-        data.emails_sent_today;
-
-    createPieChart(data);
-
-    createBarChart(data);
+document.addEventListener("DOMContentLoaded", () => {
+    initGlobalSearchEngine();
+    initTeacherProfileDropdown();
+    initNotificationBadgePolling();
 });
-```
 
-// Pie Chart
+/**
+ * Universal Client-Side Real-Time Table Row Filter Engine
+ */
+function initGlobalSearchEngine() {
+    const searchInput = document.getElementById("dashboardSearchInput");
+    if (!searchInput) return;
 
-function createPieChart(data) {
+    searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const activeTable = document.querySelector(".ui-panel table, .table-responsive table");
+        if (!activeTable) return;
 
-```
-const pieCtx =
-    document.getElementById("attendanceChart");
-
-new Chart(pieCtx, {
-
-    type: "doughnut",
-
-    data: {
-
-        labels: [
-            "Present",
-            "Absent"
-        ],
-
-        datasets: [{
-
-            data: [
-                data.present_today,
-                data.absent_today
-            ],
-
-            backgroundColor: [
-                "#16a34a",
-                "#dc2626"
-            ]
-
-        }]
-    },
-
-    options: {
-
-        responsive: true,
-
-        plugins: {
-
-            legend: {
-                position: "bottom"
-            }
-        }
-    }
-});
-```
-
-}
-
-// Bar Chart
-
-function createBarChart(data) {
-
-```
-const barCtx =
-    document.getElementById("attendanceBarChart");
-
-new Chart(barCtx, {
-
-    type: "bar",
-
-    data: {
-
-        labels: [
-            "Present",
-            "Absent",
-            "Emails"
-        ],
-
-        datasets: [{
-
-            label: "Statistics",
-
-            data: [
-
-                data.present_today,
-
-                data.absent_today,
-
-                data.emails_sent_today
-
-            ],
-
-            backgroundColor: [
-
-                "#16a34a",
-
-                "#dc2626",
-
-                "#f59e0b"
-            ]
-        }]
-    },
-
-    options: {
-
-        responsive: true,
-
-        maintainAspectRatio: false
-    }
-});
-```
-
-}
-
-// Recent Absentees Table
-
-fetch('/absentees')
-.then(response => response.json())
-.then(data => {
-
-```
-    const tableBody =
-        document.querySelector(
-            "#absenteesTable tbody"
-        );
-
-    data.absentees.forEach(student => {
-
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-
-            <td>${student.full_name}</td>
-
-            <td>${student.roll_number}</td>
-
-            <td>${student.attendance_date}</td>
-
-        `;
-
-        tableBody.appendChild(row);
+        const rows = activeTable.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+            // Do not hide empty data state placeholder text rows
+            if (row.cells.length === 1 && row.cells[0].getAttribute("colspan")) return;
+            
+            const textContent = row.innerText.toLowerCase();
+            row.style.display = textContent.includes(query) ? "" : "none";
+        });
     });
-});
-```
+}
+
+/**
+ * Top Navbar Faculty Profile Component Popup Dropdown Card Controller
+ */
+function initTeacherProfileDropdown() {
+    const trigger = document.getElementById("profilePillTrigger");
+    const menu = document.getElementById("profileDropdownMenu");
+
+    if (!trigger || !menu) return;
+
+    trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        menu.classList.toggle("show");
+        trigger.classList.toggle("active");
+    });
+
+    // Dismiss popover card context when clicking on background page layouts
+    document.addEventListener("click", () => {
+        menu.classList.remove("show");
+        trigger.classList.remove("active");
+    });
+}
+
+/**
+ * Real-Time Polling Engine for Header Notifications Badge Count
+ */
+function initNotificationBadgePolling() {
+    const badge = document.getElementById("notificationBadge");
+    if (!badge) return;
+
+    const executePoll = async () => {
+        try {
+            const response = await fetch('/notification-count');
+            const data = await response.json();
+            
+            if (data.status === "success" && data.count !== undefined) {
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? "flex" : "none";
+            }
+        } catch (error) {
+            console.warn("Telemetry polling connection drop:", error);
+        }
+    };
+
+    // Initialize immediate execution and establish 10-second recurrence interval loop
+    executePoll();
+    setInterval(executePoll, 10000);
+}
+
+/**
+ * Helper Utility Engine to Format Dates Safely inside Tables
+ */
+function formatSystemDate(dateString) {
+    if (!dateString) return "—";
+    try {
+        const options = { year: 'numeric', month: 'short', day: '2-digit' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+    } catch (e) {
+        return dateString;
+    }
+}
