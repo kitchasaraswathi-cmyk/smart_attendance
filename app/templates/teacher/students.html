@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAS - Student Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* Modern Structural Modal Stylesheet Layer Override */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-card {
+            background: #ffffff; padding: 2rem; border-radius: var(--radius-lg);
+            width: 480px; box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
+        }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; }
+        .form-control { width: 100%; padding: 0.65rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); outline: none; font-size: 0.9rem; }
+        .form-control:focus { border-color: var(--accent-blue); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.75rem; }
+        .btn-secondary { background: #f1f5f9; color: #475569; border: none; padding: 0.6rem 1.25rem; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand"><i class="bi bi-shield-check"></i><h2>SAS</h2></div>
+        <ul class="sidebar-menu">
+            <li><a href="/teacher-dashboard"><i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span></a></li>
+            <li class="active"><a href="/teacher/students"><i class="bi bi-people-fill"></i> <span>Students</span></a></li>
+            <li><a href="/teacher/attendance"><i class="bi bi-calendar-check-fill"></i> <span>Attendance</span></a></li>
+            <li><a href="/teacher/reports"><i class="bi bi-file-earmark-bar-graph-fill"></i> <span>Reports Log</span></a></li>
+            <li style="margin-top: auto;"><a href="/logout" class="logout-btn-item"><i class="bi bi-box-arrow-left"></i> <span>Sign Out</span></a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="dashboardSearchInput" placeholder="Search students by name or roll number...">
+            </div>
+            <div class="topbar-right">
+                <div class="notification-trigger"><i class="bi bi-bell"></i><span class="badge" id="notificationBadge">0</span></div>
+                <div class="profile-container">
+                    <div class="profile-pill" id="profilePillTrigger">
+                        <div class="avatar"><i class="bi bi-person-workspace"></i></div>
+                        <span class="profile-name">Instructor Panel</span>
+                        <i class="bi bi-chevron-down arrow-icon"></i>
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdownMenu">
+                        <div class="dropdown-header"><p class="user-role">Faculty Account</p></div>
+                        <hr>
+                        <a href="/logout" class="dropdown-item text-danger"><i class="bi bi-box-arrow-left"></i> Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="ui-panel">
+            <div class="panel-title-bar">
+                <h2>System Academic Roster</h2>
+                <button class="action-btn-primary" id="openModalBtn"><i class="bi bi-person-plus-fill"></i> Enroll New Student</button>
+            </div>
+            <div class="table-responsive">
+                <table id="studentsDirectoryTable">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Full Name</th>
+                            <th>Class Section</th>
+                            <th>Parent Email Contact</th>
+                            <th>Parent Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Processing roster profiles...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal-overlay" id="studentFormModal">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 1.25rem; font-weight:800;">Enroll New Student Entry</h3>
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="inp_name" class="form-control" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Roll Number</label>
+                    <input type="text" id="inp_roll" class="form-control" required placeholder="CS202601">
+                </div>
+                <div class="form-group">
+                    <label>Class Identifier</label>
+                    <input type="text" id="inp_class" class="form-control" required placeholder="Grade 10-A">
+                </div>
+                <div class="form-group">
+                    <label>Parent Email Address</label>
+                    <input type="email" id="inp_email" class="form-control" required placeholder="parent@domain.com">
+                </div>
+                <div class="form-group">
+                    <label>Parent Phone Line</label>
+                    <input type="text" id="inp_phone" class="form-control" placeholder="+1234567890">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="closeModalBtn">Cancel</button>
+                    <button type="submit" class="action-btn-primary">Commit Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            loadStudentsRoster();
+            setupModalTriggers();
+        });
+
+        async function loadStudentsRoster() {
+            try {
+                // Accesses your dynamic student blueprint directly
+                const res = await fetch('/api/students');
+                const data = await res.json();
+                const tbody = document.querySelector("#studentsDirectoryTable tbody");
+                tbody.innerHTML = "";
+
+                if (data.status === "success" || data.students) {
+                    const list = data.students || [];
+                    if(list.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No student database entries discovered.</td></tr>`;
+                        return;
+                    }
+                    list.forEach(student => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td><code>${student.roll_number}</code></td>
+                            <td><strong>${student.full_name}</strong></td>
+                            <td>${student.class_name}</td>
+                            <td>${student.parent_email}</td>
+                            <td>${student.parent_phone || '—'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch(e) { console.error("Database tracking read breakdown:", e); }
+        }
+
+        function setupModalTriggers() {
+            const modal = document.getElementById("studentFormModal");
+            document.getElementById("openModalBtn").addEventListener("click", () => modal.classList.add("show"));
+            document.getElementById("closeModalBtn").addEventListener("click", () => modal.classList.remove("show"));
+
+            document.getElementById("addStudentForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const payload = {
+                    full_name: document.getElementById("inp_name").value,
+                    roll_number: document.getElementById("inp_roll").value,
+                    class_name: document.getElementById("inp_class").value,
+                    parent_email: document.getElementById("inp_email").value,
+                    parent_phone: document.getElementById("inp_phone").value
+                };
+
+                try {
+                    const res = await fetch('/students', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+                    if(result.status === "success") {
+                        modal.classList.remove("show");
+                        document.getElementById("addStudentForm").reset();
+                        loadStudentsRoster();
+                    } else { alert("Operational Error: " + result.message); }
+                } catch(err) { console.error(err); }
+            });
+        }
+    </script>
+</body>
+</html>
