@@ -10,16 +10,18 @@ def mark_attendance(data):
 
     # Validation
     if not student_id or not attendance_date or not status:
-
         return {
             "status": "error",
             "message": "All fields are required"
         }
 
+    db_conn = None
+    cursor = None
+    parent_cursor = None
+
     try:
 
         db_conn = get_db_connection()
-
         cursor = db_conn.cursor()
 
         query = """
@@ -43,52 +45,56 @@ def mark_attendance(data):
 
         db_conn.commit()
 
-        db_conn.commit()
-
+        # Send email only if student is absent
         if status.lower() == "absent":
 
-         parent_cursor = db_conn.cursor(dictionary=True)
+            parent_cursor = db_conn.cursor(dictionary=True)
 
-        parent_cursor.execute(
-        """
-        SELECT
-            full_name,
-            parent_email
-        FROM students
-        WHERE id = %s
-        """,
-         (student_id,)
-        )
+            parent_cursor.execute(
+                """
+                SELECT
+                    full_name,
+                    parent_email
+                FROM students
+                WHERE id = %s
+                """,
+                (student_id,)
+            )
 
-        student = parent_cursor.fetchone()
+            student = parent_cursor.fetchone()
 
-        if student and student["parent_email"]:
+            if student and student["parent_email"]:
 
-          send_absentee_notification(
-    student_id,
-    student["parent_email"],
-    student["full_name"],
-    attendance_date
-)
-
-        parent_cursor.close()
+                send_absentee_notification(
+                    student_id,
+                    student["parent_email"],
+                    student["full_name"],
+                    attendance_date
+                )
 
         return {
-        "status": "success",
-           "message": "Attendance marked successfully"
-         }
+            "status": "success",
+            "message": "Attendance marked successfully"
+        }
 
     except Exception as error:
 
-           return {
+        return {
             "status": "error",
             "message": str(error)
         }
 
     finally:
 
-        cursor.close()
-        db_conn.close()
+        if parent_cursor:
+            parent_cursor.close()
+
+        if cursor:
+            cursor.close()
+
+        if db_conn:
+            db_conn.close()
+            
 def fetch_attendance():
 
     try:
