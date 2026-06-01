@@ -98,7 +98,7 @@
 
         async function populateStudentsDropdown() {
             try {
-                const res = await fetch('/api/students');
+                const res = await fetch('/students');
                 const data = await res.json();
                 const dropdown = document.getElementById("studentSelectField");
                 if (data.students) {
