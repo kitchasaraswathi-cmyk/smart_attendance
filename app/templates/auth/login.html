@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAS - Authorized Sign In</title>
+    <style>
+        body { display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #0f172a; }
+        .login-frame { background: #ffffff; padding: 2.5rem; border-radius: var(--radius-lg); width: 400px; box-shadow: var(--shadow-md); }
+    </style>
+</head>
+<body>
+
+    <div class="login-frame">
+        <h2 style="font-weight: 800; margin-bottom: 0.25rem;">Authorized Sign In</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.75rem;">Smart Attendance Faculty Verification Portal</p>
+        
+        <form id="loginWorkspaceForm">
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase;">Account Email</label>
+                <input type="email" id="auth_email" class="form-control" style="width: 100%; padding:0.65rem 1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);" required placeholder="faculty@academy.edu">
+            </div>
+            <div class="form-group" style="margin-bottom: 1.75rem;">
+                <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase;">Security Token Password</label>
+                <input type="password" id="auth_pass" class="form-control" style="width: 100%; padding:0.65rem 1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="action-btn-primary" style="width: 100%; justify-content:center; padding: 0.75rem;"><i class="bi bi-shield-lock-fill"></i> Access Secure Workspace</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("loginWorkspaceForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const payload = {
+                email: document.getElementById("auth_email").value,
+                password: document.getElementById("auth_pass").value
+            };
+
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                if (data.status === "success") {
+                    // Route user explicitly based on the assigned user role from your auth service
+                    if (data.user.role === "teacher") {
+                        window.location.href = "/teacher-dashboard";
+                    } else {
+                        window.location.href = "/dashboard";
+                    }
+                } else {
+                    alert("Authentication Refused: " + data.message);
+                }
+            } catch(err) { console.error(err); }
+        });
+    </script>
+</body>
+</html>
