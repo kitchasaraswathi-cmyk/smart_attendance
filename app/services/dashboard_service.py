@@ -106,3 +106,4 @@ def get_notification_count():
 
         cursor.close()
         db_conn.close()
+

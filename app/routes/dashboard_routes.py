@@ -3,10 +3,16 @@ from flask import Blueprint, jsonify, render_template
 # 1. FIXED: Imported your missing service layout functions explicitly
 from app.services.dashboard_service import (
     get_dashboard_stats,
-    get_notification_count
+    get_notification_count,
 )
 from app.services.email_service import fetch_notification_logs
-from app.services.student_service import fetch_students, add_student  # Added these
+from app.services.student_service import (
+    fetch_students,
+    add_student,
+    fetch_student_by_id,
+    update_student,
+    delete_student
+)
 from app.services.attendance_service import fetch_attendance, mark_attendance, fetch_absentees  # Added these
 
 dashboard_bp = Blueprint(
@@ -65,20 +71,6 @@ def absentees_log():
     result = fetch_absentees()
     return jsonify(result)
 
-@dashboard_bp.route("/api/students", methods=["GET"])
-def get_students():
-    # FIXED: Swapped out the unimported "fetch_all_students()" with your actual service function
-    result = fetch_students() 
-    return jsonify(result)
-
-@dashboard_bp.route("/students", methods=["POST"])
-def post_new_student():
-    # FIXED: Added the POST handler requested by the "Enroll New Student" frontend form modal
-    from flask import request
-    data = request.get_json()
-    result = add_student(data)
-    return jsonify(result)
-
 @dashboard_bp.route("/attendance", methods=["GET", "POST"])
 def handle_attendance():
     # FIXED: Provides dual compatibility to record daily marks or pull global history arrays
@@ -90,3 +82,4 @@ def handle_attendance():
     else:
         result = fetch_attendance()
         return jsonify(result)
+    
