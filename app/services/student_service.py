@@ -94,3 +94,125 @@ def add_student(data):
 
         cursor.close()
         db_conn.close()
+
+def fetch_student_by_id(student_id):
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor(dictionary=True)
+
+        query = """
+            SELECT *
+            FROM students
+            WHERE id = %s
+        """
+
+        cursor.execute(query, (student_id,))
+
+        student = cursor.fetchone()
+
+        return {
+            "status": "success",
+            "student": student
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+    finally:
+
+        cursor.close()
+        db_conn.close()
+
+def update_student(student_id, data):
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor()
+
+        query = """
+            UPDATE students
+            SET
+                full_name=%s,
+                roll_number=%s,
+                class_name=%s,
+                parent_email=%s,
+                parent_phone=%s
+            WHERE id=%s
+        """
+
+        cursor.execute(
+            query,
+            (
+                data["full_name"],
+                data["roll_number"],
+                data["class_name"],
+                data["parent_email"],
+                data["parent_phone"],
+                student_id
+            )
+        )
+
+        db_conn.commit()
+
+        return {
+            "status": "success",
+            "message": "Student updated successfully"
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+    finally:
+
+        cursor.close()
+        db_conn.close()
+
+def delete_student(student_id):
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor()
+
+        query = """
+            DELETE FROM students
+            WHERE id = %s
+        """
+
+        cursor.execute(
+            query,
+            (student_id,)
+        )
+
+        db_conn.commit()
+
+        return {
+            "status": "success",
+            "message": "Student deleted successfully"
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+    finally:
+
+        cursor.close()
+        db_conn.close()
