@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAS - Operational Attendance Registry</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand"><i class="bi bi-shield-check"></i><h2>SAS</h2></div>
+        <ul class="sidebar-menu">
+            <li><a href="/teacher-dashboard"><i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span></a></li>
+            <li><a href="/teacher/students"><i class="bi bi-people-fill"></i> <span>Students</span></a></li>
+            <li class="active"><a href="/teacher/attendance"><i class="bi bi-calendar-check-fill"></i> <span>Attendance</span></a></li>
+            <li><a href="/teacher/reports"><i class="bi bi-file-earmark-bar-graph-fill"></i> <span>Reports Log</span></a></li>
+            <li style="margin-top: auto;"><a href="/logout" class="logout-btn-item"><i class="bi bi-box-arrow-left"></i> <span>Sign Out</span></a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="dashboardSearchInput" placeholder="Filter daily log records dynamically...">
+            </div>
+            <div class="topbar-right">
+                <div class="notification-trigger"><i class="bi bi-bell"></i><span class="badge" id="notificationBadge">0</span></div>
+                <div class="profile-container">
+                    <div class="profile-pill" id="profilePillTrigger">
+                        <div class="avatar"><i class="bi bi-person-workspace"></i></div>
+                        <span class="profile-name">Instructor Panel</span>
+                        <i class="bi bi-chevron-down arrow-icon"></i>
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdownMenu">
+                        <div class="dropdown-header"><p class="user-role">Faculty Account</p></div>
+                        <hr>
+                        <a href="/logout" class="dropdown-item text-danger"><i class="bi bi-box-arrow-left"></i> Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="ui-panel" style="margin-bottom: 2rem;">
+            <div class="panel-title-bar">
+                <h2>Daily Operational Roll Call Entry</h2>
+                <span id="currentDateDisplay" style="font-weight: 700; color: var(--accent-blue);"></span>
+            </div>
+            <form id="markAttendanceForm" style="display: flex; gap: 1rem; align-items: center; background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border:1px solid var(--border-color)">
+                <div style="flex: 2;">
+                    <select id="studentSelectField" class="search-box" style="width: 100%; border:1px solid var(--border-color); background:white; font-weight:600;" required>
+                        <option value="">Choose an enrolled student profile...</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <select id="statusSelectField" class="search-box" style="width: 100%; border:1px solid var(--border-color); background:white; font-weight:600;" required>
+                        <option value="present">Present (In Class)</option>
+                        <option value="absent">Absent (Send Alert Email)</option>
+                    </select>
+                </div>
+                <button type="submit" class="action-btn-primary" style="height: 42px;"><i class="bi bi-bookmark-plus-fill"></i> Save Session Status</button>
+            </form>
+        </section>
+
+        <section class="ui-panel">
+            <div class="panel-title-bar"><h2>Master Historical Access Trace logs</h2></div>
+            <div class="table-responsive">
+                <table id="masterAttendanceTable">
+                    <thead>
+                        <tr>
+                            <th>Log ID Ref</th>
+                            <th>Student Full Name</th>
+                            <th>Roll Number</th>
+                            <th>Calendar Logging Timestamp</th>
+                            <th>Status Metric</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Collecting database trace records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById("currentDateDisplay").textContent = formatSystemDate(today);
+            
+            populateStudentsDropdown();
+            loadMasterAttendanceLogs();
+            setupFormSubmission(today);
+        });
+
+        async function populateStudentsDropdown() {
+            try {
+                const res = await fetch('/api/students');
+                const data = await res.json();
+                const dropdown = document.getElementById("studentSelectField");
+                if (data.students) {
+                    data.students.forEach(s => {
+                        const opt = document.createElement("option");
+                        opt.value = s.id; // Maps to internal operational student table IDs
+                        opt.textContent = `${s.full_name} (${s.roll_number})`;
+                        dropdown.appendChild(opt);
+                    });
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadMasterAttendanceLogs() {
+            try {
+                const res = await fetch('/attendance');
+                const data = await res.json();
+                const tbody = document.querySelector("#masterAttendanceTable tbody");
+                tbody.innerHTML = "";
+
+                if (data.status === "success" && data.attendance) {
+                    if(data.attendance.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No logs saved in the system database.</td></tr>`;
+                        return;
+                    }
+                    data.attendance.forEach(log => {
+                        const isPresent = log.status.toLowerCase() === "present";
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>#<code>${log.id}</code></td>
+                            <td><strong>${log.full_name}</strong></td>
+                            <td><code>${log.roll_number}</code></td>
+                            <td>${formatSystemDate(log.attendance_date)}</td>
+                            <td><span class="badge-pill ${isPresent ? 'success' : 'danger'}">${log.status.toUpperCase()}</span></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch(err) { console.error(err); }
+        }
+
+        function setupFormSubmission(todayString) {
+            document.getElementById("markAttendanceForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const payload = {
+                    student_id: document.getElementById("studentSelectField").value,
+                    attendance_date: todayString,
+                    status: document.getElementById("statusSelectField").value
+                };
+
+                try {
+                    const res = await fetch('/attendance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if(data.status === "success") {
+                        loadMasterAttendanceLogs();
+                        document.getElementById("studentSelectField").value = "";
+                    } else { alert("Submission Refused: " + data.message); }
+                } catch(err) { console.error(err); }
+            });
+        }
+    </script>
+</body>
+</html>
