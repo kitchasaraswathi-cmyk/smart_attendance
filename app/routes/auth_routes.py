@@ -1,9 +1,22 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, redirect, render_template
 
 from app.services.auth_service import register_user, login_user
 
 auth_bp = Blueprint('auth', __name__)
 
+@auth_bp.route('/')
+def home():
+    return redirect('/login-page')
+
+
+@auth_bp.route('/login-page')
+def login_page():
+    return render_template('auth/login.html')
+
+
+@auth_bp.route('/register-page')
+def register_page():
+    return render_template('auth/register.html')
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -45,3 +58,10 @@ def dashboard():
         "user_id": session['user_id'],
         "role": session['user_role']
     })
+
+@auth_bp.route('/logout')
+def logout():
+
+    session.clear()
+
+    return redirect('/')
