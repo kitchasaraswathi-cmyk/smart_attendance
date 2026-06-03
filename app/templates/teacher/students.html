@@ -76,6 +76,7 @@
                             <th>Class Section</th>
                             <th>Parent Email Contact</th>
                             <th>Parent Phone</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -120,70 +121,236 @@
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            loadStudentsRoster();
-            setupModalTriggers();
-        });
+document.addEventListener("DOMContentLoaded", () => {
+    loadStudentsRoster();
+    setupModalTriggers();
+});
 
-        async function loadStudentsRoster() {
-            try {
-                // Accesses your dynamic student blueprint directly
-                const res = await fetch('/api/students');
-                const data = await res.json();
-                const tbody = document.querySelector("#studentsDirectoryTable tbody");
-                tbody.innerHTML = "";
+let editingStudentId = null;
 
-                if (data.status === "success" || data.students) {
-                    const list = data.students || [];
-                    if(list.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No student database entries discovered.</td></tr>`;
-                        return;
-                    }
-                    list.forEach(student => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td><code>${student.roll_number}</code></td>
-                            <td><strong>${student.full_name}</strong></td>
-                            <td>${student.class_name}</td>
-                            <td>${student.parent_email}</td>
-                            <td>${student.parent_phone || '—'}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                }
-            } catch(e) { console.error("Database tracking read breakdown:", e); }
-        }
+/* ==========================
+   LOAD STUDENTS
+========================== */
+async function loadStudentsRoster() {
+    try {
+        const res = await fetch('/students');
+        const data = await res.json();
 
-        function setupModalTriggers() {
-            const modal = document.getElementById("studentFormModal");
-            document.getElementById("openModalBtn").addEventListener("click", () => modal.classList.add("show"));
-            document.getElementById("closeModalBtn").addEventListener("click", () => modal.classList.remove("show"));
+        const tbody =
+            document.querySelector("#studentsDirectoryTable tbody");
 
-            document.getElementById("addStudentForm").addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const payload = {
-                    full_name: document.getElementById("inp_name").value,
-                    roll_number: document.getElementById("inp_roll").value,
-                    class_name: document.getElementById("inp_class").value,
-                    parent_email: document.getElementById("inp_email").value,
-                    parent_phone: document.getElementById("inp_phone").value
-                };
+        tbody.innerHTML = "";
 
-                try {
-                    const res = await fetch('/students', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const result = await res.json();
-                    if(result.status === "success") {
-                        modal.classList.remove("show");
-                        document.getElementById("addStudentForm").reset();
-                        loadStudentsRoster();
-                    } else { alert("Operational Error: " + result.message); }
-                } catch(err) { console.error(err); }
+        if (data.status === "success" && data.students) {
+
+            if (data.students.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="6"
+                        style="text-align:center">
+                        No students found
+                    </td>
+                </tr>`;
+                return;
+            }
+
+            data.students.forEach(student => {
+
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${student.roll_number}</td>
+                    <td>${student.full_name}</td>
+                    <td>${student.class_name}</td>
+                    <td>${student.parent_email}</td>
+                    <td>${student.parent_phone || '-'}</td>
+                    <td>
+                        <button
+                            onclick="editStudent(${student.id})">
+                            Edit
+                        </button>
+
+                        <button
+                            onclick="deleteStudent(${student.id})">
+                            Delete
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
             });
         }
-    </script>
+
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+/* ==========================
+   EDIT STUDENT
+========================== */
+async function editStudent(id) {
+
+    try {
+
+        const res = await fetch(`/students/${id}`);
+        const data = await res.json();
+
+        if (data.status !== "success") {
+            alert(data.message);
+            return;
+        }
+
+        const student = data.student;
+
+        document.getElementById("inp_name").value =
+            student.full_name;
+
+        document.getElementById("inp_roll").value =
+            student.roll_number;
+
+        document.getElementById("inp_class").value =
+            student.class_name;
+
+        document.getElementById("inp_email").value =
+            student.parent_email;
+
+        document.getElementById("inp_phone").value =
+            student.parent_phone || "";
+
+        editingStudentId = id;
+
+        document.querySelector(".modal-card h3")
+            .textContent = "Edit Student";
+
+        document.getElementById("studentFormModal")
+            .classList.add("show");
+
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+/* ==========================
+   DELETE STUDENT
+========================== */
+async function deleteStudent(id) {
+
+    if (!confirm("Delete student?")) {
+        return;
+    }
+
+    try {
+
+        const res = await fetch(`/students/${id}`, {
+            method: "DELETE"
+        });
+
+        const data = await res.json();
+
+        alert(data.message);
+
+        loadStudentsRoster();
+
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+/* ==========================
+   MODAL + FORM
+========================== */
+function setupModalTriggers() {
+
+    const modal =
+        document.getElementById("studentFormModal");
+
+    document.getElementById("openModalBtn")
+        .addEventListener("click", () => {
+
+            editingStudentId = null;
+
+            document.getElementById("addStudentForm")
+                .reset();
+
+            document.querySelector(".modal-card h3")
+                .textContent =
+                "Enroll New Student Entry";
+
+            modal.classList.add("show");
+        });
+
+    document.getElementById("closeModalBtn")
+        .addEventListener("click", () => {
+            modal.classList.remove("show");
+        });
+
+    document.getElementById("addStudentForm")
+        .addEventListener("submit", async (e) => {
+
+        e.preventDefault();
+
+        const payload = {
+            full_name:
+                document.getElementById("inp_name").value,
+
+            roll_number:
+                document.getElementById("inp_roll").value,
+
+            class_name:
+                document.getElementById("inp_class").value,
+
+            parent_email:
+                document.getElementById("inp_email").value,
+
+            parent_phone:
+                document.getElementById("inp_phone").value
+        };
+
+        try {
+
+            const url = editingStudentId
+                ? `/students/${editingStudentId}`
+                : "/students";
+
+            const method = editingStudentId
+                ? "PUT"
+                : "POST";
+
+            const res = await fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+
+            if (result.status === "success") {
+
+                modal.classList.remove("show");
+
+                document.getElementById("addStudentForm")
+                    .reset();
+
+                editingStudentId = null;
+
+                loadStudentsRoster();
+
+                alert(result.message);
+
+            } else {
+
+                alert(result.message);
+            }
+
+        } catch(error) {
+
+            console.error(error);
+        }
+    });
+}
+</script>
 </body>
 </html>
