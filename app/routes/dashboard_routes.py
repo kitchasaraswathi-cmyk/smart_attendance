@@ -71,15 +71,3 @@ def absentees_log():
     result = fetch_absentees()
     return jsonify(result)
 
-@dashboard_bp.route("/attendance", methods=["GET", "POST"])
-def handle_attendance():
-    # FIXED: Provides dual compatibility to record daily marks or pull global history arrays
-    from flask import request
-    if request.method == "POST":
-        data = request.get_json()
-        result = mark_attendance(data)
-        return jsonify(result)
-    else:
-        result = fetch_attendance()
-        return jsonify(result)
-    
