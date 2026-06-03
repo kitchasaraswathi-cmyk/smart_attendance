@@ -1,5 +1,5 @@
 import os
-from flask import session
+from flask import session, render_template
 from app.routes.student_routes import student_bp
 
 from flask import Flask
@@ -35,10 +35,9 @@ def create_app():
 
     @app.route('/')
     def home_route():
-        return {
-            "status": "success",
-            "message": "Welcome to Smart Attendance System"
-        }
+      return render_template(
+        'auth/login.html'
+    )
 
     @app.route('/test')
     def test_route():
