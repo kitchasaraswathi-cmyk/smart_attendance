@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #f8fafc; --bg-sidebar: #0f172a; --sidebar-text: #94a3b8;
+            --sidebar-hover: #1e293b; --sidebar-active: #38bdf8; --text-main: #1e293b;
+            --text-muted: #64748b; --card-bg: #ffffff; --border-color: #e2e8f0;
+            --color-students: #3b82f6; --color-teachers: #10b981; --color-parents: #8b5cf6;
+            --color-present: #22c55e; --color-absent: #ef4444; --color-notifications: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-primary); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* SIDEBAR STYLE */
+        .sidebar { width: 260px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; transition: all 0.3s ease; z-index: 100; }
+        .sidebar-brand { padding: 24px; font-size: 1.25rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1e293b; }
+        .sidebar-brand i { color: var(--sidebar-active); }
+        .sidebar-menu { list-style: none; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; overflow-y: auto; }
+        .sidebar-menu li a { display: flex; align-items: center; gap: 16px; padding: 12px 16px; color: var(--sidebar-text); text-decoration: none; font-weight: 500; border-radius: 8px; transition: all 0.2s ease; }
+        .sidebar-menu li a:hover, .sidebar-menu li.active a { background-color: var(--sidebar-hover); color: #ffffff; }
+        .sidebar-menu li.active a i { color: var(--sidebar-active); }
+        .sidebar-footer { padding: 16px; border-top: 1px solid #1e293b; }
+        .logout-btn { display: flex; align-items: center; gap: 16px; padding: 12px 16px; color: #f87171; text-decoration: none; font-weight: 500; border-radius: 8px; }
+        .logout-btn:hover { background-color: #7f1d1d33; }
+
+        /* CONTENT ENGINE */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .top-header { background-color: var(--card-bg); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .menu-toggle { display: none; font-size: 1.25rem; cursor: pointer; }
+        .user-profile { display: flex; align-items: center; gap: 12px; }
+        .user-profile img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .user-info .name { font-weight: 600; font-size: 0.9rem; }
+        .user-info .role { font-size: 0.75rem; color: var(--text-muted); }
+        .dashboard-container { padding: 32px; max-width: 1400px; width: 100%; margin: 0 auto; }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; left: -260px; height: 100vh; }
+            .sidebar.active { left: 0; }
+            .menu-toggle { display: block; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>SAS</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="{{ 'active' if request.path == '/admin-dashboard' else '' }}"><a href="/admin-dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li class="{{ 'active' if request.path == '/admin/teachers-page' else '' }}"><a href="/admin/teachers-page"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a></li>
+            <li class="{{ 'active' if request.path == '/admin/parents-page' else '' }}"><a href="/admin/parents-page"><i class="fa-solid fa-user-group"></i> Parents</a></li>
+            <li><a href="#"><i class="fa-solid fa-user-graduate"></i> Students</a></li>
+            <li><a href="#"><i class="fa-solid fa-calendar-check"></i> Attendance</a></li>
+            <li class="{{ 'active' if request.path == '/admin/analytics' else '' }}"><a href="/admin/analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
+            <li class="{{ 'active' if request.path == '/admin/notifications-page' else '' }}"><a href="/admin/notifications-page"><i class="fa-solid fa-bell"></i> Notifications</a></li>
+            <li><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="/logout" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></div>
+            <div class="user-profile">
+                <div class="user-info">
+                    <div class="name" id="adminName">Loading...</div>
+                    <div class="role">Administrator</div>
+                </div>
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Admin">
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script>
+        // Responsive Menu Drawer Toggle
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        if(menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+        }
+
+        // Fetch User details profile info from `/admin/me`
+        fetch('/admin/me')
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    document.getElementById('adminName').textContent = `Admin (ID: ${data.user_id})`;
+                }
+            }).catch(err => console.error("Error profile resolution:", err));
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
