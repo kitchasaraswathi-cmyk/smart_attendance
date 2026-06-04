@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard Overview - EduDash{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title { margin-bottom: 24px; }
+    .page-title h1 { font-size: 1.75rem; font-weight: 700; }
+    .page-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+    
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 32px; }
+    .card { background-color: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-details .count { font-size: 1.75rem; font-weight: 700; margin-bottom: 4px; }
+    .card-details .label { color: var(--text-muted); font-size: 0.875rem; font-weight: 500; }
+    .card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.25rem; }
+    
+    .card.students .card-icon { background: #eff6ff; color: var(--color-students); }
+    .card.teachers .card-icon { background: #ecfdf5; color: var(--color-teachers); }
+    .card.parents .card-icon { background: #f5f3ff; color: var(--color-parents); }
+    .card.notifications .card-icon { background: #fffbeb; color: var(--color-notifications); }
+
+    .content-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .content-block { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; min-height: 260px; }
+    @media (max-width: 1024px) { .content-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <h1>Dashboard Overview</h1>
+    <p>Live operational school analytics from database</p>
+</div>
+
+<section class="metrics-grid">
+    <div class="card students">
+        <div class="card-details">
+            <div class="count" id="countStudents">...</div>
+            <div class="label">Total Students</div>
+        </div>
+        <div class="card-icon"><i class="fa-solid fa-user-graduate"></i></div>
+    </div>
+
+    <div class="card teachers">
+        <div class="card-details">
+            <div class="count" id="countTeachers">...</div>
+            <div class="label">Total Teachers</div>
+        </div>
+        <div class="card-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+    </div>
+
+    <div class="card parents">
+        <div class="card-details">
+            <div class="count" id="countParents">...</div>
+            <div class="label">Total Parents</div>
+        </div>
+        <div class="card-icon"><i class="fa-solid fa-user-group"></i></div>
+    </div>
+
+    <div class="card notifications">
+        <div class="card-details">
+            <div class="count" id="countNotifications">...</div>
+            <div class="label">Notifications Sent</div>
+        </div>
+        <div class="card-icon"><i class="fa-solid fa-paper-plane"></i></div>
+    </div>
+</section>
+
+<div class="content-row">
+    <div class="content-block">
+        <h3>System Metrics Status</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">All card feeds above match counts query structures from the active SQL transaction processing loop inside <code>get_admin_stats()</code>.</p>
+    </div>
+    <div class="content-block">
+        <h3>Quick Diagnostics</h3>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Query database figures from your Blueprint route /admin/stats
+        fetch('/admin/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    document.getElementById('countStudents').textContent = data.stats.students.toLocaleString();
+                    document.getElementById('countTeachers').textContent = data.stats.teachers.toLocaleString();
+                    document.getElementById('countParents').textContent = data.stats.parents.toLocaleString();
+                    document.getElementById('countNotifications').textContent = data.stats.notifications.toLocaleString();
+                } else {
+                    console.error("Database response error payload:", data.message);
+                }
+            })
+            .catch(error => console.error("Error communicating with service:", error));
+    });
+</script>
+{% endblock %}
