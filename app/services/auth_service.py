@@ -11,6 +11,7 @@ def register_user(data):
     full_name = data.get('full_name')
     email = data.get('email')
     password = data.get('password')
+    role = data.get('role', 'teacher')
 
     # Check empty fields
     if not full_name or not email or not password:
@@ -23,12 +24,10 @@ def register_user(data):
     try:
 
         db_conn = get_db_connection()
-
         cursor = db_conn.cursor(dictionary=True)
 
         # Check existing email
         check_query = "SELECT * FROM users WHERE email = %s"
-
         cursor.execute(check_query, (email,))
 
         existing_user = cursor.fetchone()
@@ -43,16 +42,26 @@ def register_user(data):
         # Hash password
         hashed_password = generate_password_hash(password)
 
-        # Insert user
+        # Insert user with role
         insert_query = """
             INSERT INTO users
-            (full_name, email, password_hash)
-            VALUES (%s, %s, %s)
+            (
+                full_name,
+                email,
+                password_hash,
+                role
+            )
+            VALUES (%s, %s, %s, %s)
         """
 
         cursor.execute(
             insert_query,
-            (full_name, email, hashed_password)
+            (
+                full_name,
+                email,
+                hashed_password,
+                role
+            )
         )
 
         db_conn.commit()
@@ -73,6 +82,8 @@ def register_user(data):
 
         cursor.close()
         db_conn.close()
+
+
 def login_user(data):
 
     email = data.get('email')
@@ -89,12 +100,10 @@ def login_user(data):
     try:
 
         db_conn = get_db_connection()
-
         cursor = db_conn.cursor(dictionary=True)
 
         # Find user by email
         query = "SELECT * FROM users WHERE email = %s"
-
         cursor.execute(query, (email,))
 
         user = cursor.fetchone()
@@ -121,14 +130,14 @@ def login_user(data):
             }
 
         return {
-           "status": "success",
-           "message": "Login successful",
-           "user": {
-           "id": user['id'],
-           "full_name": user['full_name'],
-           "email": user['email'],
-           "role": user['role']
-           }
+            "status": "success",
+            "message": "Login successful",
+            "user": {
+                "id": user['id'],
+                "full_name": user['full_name'],
+                "email": user['email'],
+                "role": user['role']
+            }
         }
 
     except Exception as error:

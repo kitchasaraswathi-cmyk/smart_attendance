@@ -26,21 +26,24 @@ def register():
     result = register_user(data)
 
     return jsonify(result)
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
-
     data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid JSON body"
+        }), 400
 
     result = login_user(data)
 
-# Create session after successful login
     if result['status'] == 'success':
+        session['user_id'] = result['user']['id']
+        session['user_role'] = result['user']['role']
 
-       session['user_id'] = result['user']['id']
-
-       session['user_role'] = result['user']['role']
-
-    return jsonify(result) 
+    return jsonify(result)
 @auth_bp.route('/dashboard', methods=['GET'])
 def dashboard():
 
