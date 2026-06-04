@@ -1,0 +1,340 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Parent Management - EduDash{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Section Headers */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; }
+    .page-header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+    /* Action bar control configurations */
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg);
+        padding: 16px 24px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 24px;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .search-wrapper {
+        position: relative;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+    .search-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+    .search-input {
+        width: 100%;
+        padding: 10px 16px 10px 40px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        outline: none;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--color-parents); }
+    
+    /* Global Module Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border: none;
+        transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary { background-color: var(--color-parents); color: #ffffff; }
+    .btn-secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+
+    /* Custom Responsive Tables */
+    .table-container {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow-x: auto;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+    .custom-table th {
+        background-color: #f8fafc;
+        padding: 16px;
+        color: var(--text-muted);
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .custom-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+    }
+    .custom-table tr:last-child td { border-bottom: none; }
+    
+    .btn-icon-delete {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 6px 10px;
+        border-radius: 6px;
+        color: var(--color-absent);
+        transition: background 0.2s;
+    }
+    .btn-icon-delete:hover { background: #fef2f2; }
+
+    /* Modal Architecture Overlay styling */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0; visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal-box {
+        background: var(--card-bg);
+        padding: 32px;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 460px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+    }
+    .modal-overlay.active .modal-box { transform: translateY(0); }
+    .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        outline: none;
+        font-size: 0.9rem;
+    }
+    .form-control:focus { border-color: var(--color-parents); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Parent Management</h1>
+        <p>Register guardian profiles, view system authorization metrics, and configure connection logs</p>
+    </div>
+</div>
+
+<div class="action-bar">
+    <div class="search-wrapper">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="parentSearch" class="search-input" placeholder="Search parent by name or email details...">
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()">
+        <i class="fa-solid fa-plus"></i> Add Parent
+    </button>
+</div>
+
+<div class="table-container">
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Guardian Name</th>
+                <th>Email Address</th>
+                <th>Created At</th>
+                <th style="text-align: center;">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="parentTableBody">
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted);">Syncing database profiles data...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="modal-overlay" id="parentModal">
+    <div class="modal-box">
+        <h3 class="modal-title">Add New Parent Profile</h3>
+        <form id="parentForm" onsubmit="handleFormSubmit(event)">
+            
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" class="form-control" placeholder="e.g. Robert Chen" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="robert.chen@mail.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Minimum 6 characters required" required>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let parentsCache = [];
+
+    document.addEventListener("DOMContentLoaded", fetchParents);
+
+    // READ: Query backend lists inside get_parents API wrapper
+    function fetchParents() {
+        fetch('/admin/parents')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    parentsCache = data.parents;
+                    renderTable(parentsCache);
+                } else {
+                    alert("Database retrieval error: " + data.message);
+                }
+            })
+            .catch(err => console.error("Communication layer breakdown:", err));
+    }
+
+    // Dynamic Render Core Processing Loop
+    function renderTable(list) {
+        const tbody = document.getElementById('parentTableBody');
+        tbody.innerHTML = '';
+
+        if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No parent profiles match the active search.</td></tr>`;
+            return;
+        }
+
+        list.forEach(parent => {
+            const dateStr = parent.created_at ? new Date(parent.created_at).toLocaleDateString() : 'N/A';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>#${parent.id}</strong></td>
+                    <td>${escapeHtml(parent.full_name)}</td>
+                    <td>${escapeHtml(parent.email)}</td>
+                    <td>${dateStr}</td>
+                    <td style="text-align: center;">
+                        <button class="btn-icon-delete" onclick="deleteParentConfirm(${parent.id})" title="Delete Account Profile">
+                            <i class="fa-solid fa-user-minus"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // SEARCH: Client-side search interface filter
+    document.getElementById('parentSearch').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const filtered = parentsCache.filter(p => 
+            p.full_name.toLowerCase().includes(query) || 
+            p.email.toLowerCase().includes(query)
+        );
+        renderTable(filtered);
+    });
+
+    // Modal view states transitions
+    function openAddModal() {
+        document.getElementById('parentForm').reset();
+        document.getElementById('parentModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('parentModal').classList.remove('active');
+    }
+
+    // CREATE: Form dynamic routing delivery processor via POST
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const payload = {
+            full_name: document.getElementById('fullName').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        };
+
+        fetch('/admin/parents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal();
+                fetchParents(); // Live interface refresh tracking sync
+            } else {
+                alert("Creation rejected: " + data.message);
+            }
+        });
+    }
+
+    // DELETE: Delete Request Lifecycle Handler
+    function deleteParentConfirm(id) {
+        if (confirm("Are you sure you want to permanently delete this parent profile record? This action will unlink associated notifications loops.")) {
+            fetch(`/admin/parents/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        fetchParents();
+                    } else {
+                        alert("Deletion failed: " + data.message);
+                    }
+                });
+        }
+    }
+
+    // Security sanitization utility helper
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{% endblock %}
