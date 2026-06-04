@@ -3,27 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAS - Student Management</title>
+    <title>Student Management - EduDash</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        /* Modern Structural Modal Stylesheet Layer Override */
+        /* Section Headers */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .page-header h1 { font-size: 1.75rem; font-weight: 700; margin-top: 0; }
+        .page-header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; margin-bottom: 0; }
+
+        /* Action bar control configurations */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg, #ffffff);
+            padding: 16px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .search-wrapper {
+            position: relative;
+            flex-grow: 1;
+            max-width: 400px;
+        }
+        .search-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--color-students, #3b82f6); }
+        
+        /* Global Module Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background-color: var(--color-students, #3b82f6); color: #ffffff; }
+        .btn-secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+
+        /* Custom Responsive Tables */
+        .table-container {
+            background: var(--card-bg, #ffffff);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow-x: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .custom-table th {
+            background-color: #f8fafc;
+            padding: 16px;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .custom-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+        .custom-table tr:last-child td { border-bottom: none; }
+        
+        /* Action Buttons styling from Parents UI theme paradigm */
+        .action-btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-icon-edit {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px 10px;
+            border-radius: 6px;
+            color: var(--color-students, #3b82f6);
+            transition: background 0.2s;
+        }
+        .btn-icon-edit:hover { background: #eff6ff; }
+
+        .btn-icon-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px 10px;
+            border-radius: 6px;
+            color: var(--color-absent, #ef4444);
+            transition: background 0.2s;
+        }
+        .btn-icon-delete:hover { background: #fef2f2; }
+
+        /* Modal Architecture Overlay styling */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px);
-            display: none; align-items: center; justify-content: center; z-index: 1000;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0; visibility: hidden;
+            transition: all 0.3s ease;
         }
-        .modal-overlay.show { display: flex; }
-        .modal-card {
-            background: #ffffff; padding: 2rem; border-radius: var(--radius-lg);
-            width: 480px; box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box {
+            background: var(--card-bg, #ffffff);
+            padding: 32px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            box-sizing: border-box;
         }
-        .form-group { margin-bottom: 1.25rem; }
-        .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; }
-        .form-control { width: 100%; padding: 0.65rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); outline: none; font-size: 0.9rem; }
-        .form-control:focus { border-color: var(--accent-blue); }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.75rem; }
-        .btn-secondary { background: #f1f5f9; color: #475569; border: none; padding: 0.6rem 1.25rem; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; margin-top: 0; }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            background-color: #ffffff;
+        }
+        .form-control:focus { border-color: var(--color-students, #3b82f6); }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
     </style>
 </head>
 <body>
@@ -43,9 +192,8 @@
         <header class="topbar">
             <div class="search-box">
                 <i class="bi bi-search"></i>
-                <input type="text" id="dashboardSearchInput" placeholder="Search students by name or roll number...">
+                <input type="text" id="dashboardSearchInput" placeholder="Filter active tables rows...">
             </div>
-            <div class="topbar-right">
                 <div class="notification-trigger"><i class="bi bi-bell"></i><span class="badge" id="notificationBadge">0</span></div>
                 <div class="profile-container">
                     <div class="profile-pill" id="profilePillTrigger">
@@ -62,58 +210,81 @@
             </div>
         </header>
 
-        <section class="ui-panel">
-            <div class="panel-title-bar">
-                <h2>System Academic Roster</h2>
-                <button class="action-btn-primary" id="openModalBtn"><i class="bi bi-person-plus-fill"></i> Enroll New Student</button>
+        <div style="padding: 2rem 0;">
+            <div class="page-header">
+                <div>
+                    <h1>Student Management</h1>
+                    <p>Register student profiles, assign core class codes, and track parental connection logs</p>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table id="studentsDirectoryTable">
+
+            <div class="action-bar">
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="studentSearch" class="search-input" placeholder="Search student by name, roll no, or class details...">
+                </div>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fa-solid fa-plus"></i> Add Student
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table class="custom-table">
                     <thead>
                         <tr>
-                            <th>Roll Number</th>
-                            <th>Student Full Name</th>
-                            <th>Class Section</th>
-                            <th>Parent Email Contact</th>
+                            <th>ID</th>
+                            <th>Student Name</th>
+                            <th>Roll No</th>
+                            <th>Class / Grade</th>
+                            <th>Parent Email</th>
                             <th>Parent Phone</th>
-                            <th>Actions</th>
+                            <th style="text-align: center; width: 120px;">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Processing roster profiles...</td></tr>
+                    <tbody id="studentTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Syncing database profiles data...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-        </section>
+        </div>
     </main>
 
-    <div class="modal-overlay" id="studentFormModal">
-        <div class="modal-card">
-            <h3 style="margin-bottom: 1.25rem; font-weight:800;">Enroll New Student Entry</h3>
-            <form id="addStudentForm">
+    <div class="modal-overlay" id="studentModal">
+        <div class="modal-box">
+            <h3 class="modal-title" id="modalTitle">Add New Student Profile</h3>
+            <form id="studentForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="studentId">
+                
                 <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="inp_name" class="form-control" required placeholder="John Doe">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" class="form-control" placeholder="e.g. John Doe" required>
                 </div>
+                
                 <div class="form-group">
-                    <label>Roll Number</label>
-                    <input type="text" id="inp_roll" class="form-control" required placeholder="CS202601">
+                    <label for="rollNumber">Roll Number</label>
+                    <input type="text" id="rollNumber" class="form-control" placeholder="e.g. STU10024" required>
                 </div>
+                
                 <div class="form-group">
-                    <label>Class Identifier</label>
-                    <input type="text" id="inp_class" class="form-control" required placeholder="Grade 10-A">
+                    <label for="className">Class Name</label>
+                    <input type="text" id="className" class="form-control" placeholder="e.g. Grade 10-A" required>
                 </div>
+
                 <div class="form-group">
-                    <label>Parent Email Address</label>
-                    <input type="email" id="inp_email" class="form-control" required placeholder="parent@domain.com">
+                    <label for="parentEmail">Parent Email Address</label>
+                    <input type="email" id="parentEmail" class="form-control" placeholder="parent@example.com">
                 </div>
+
                 <div class="form-group">
-                    <label>Parent Phone Line</label>
-                    <input type="text" id="inp_phone" class="form-control" placeholder="+1234567890">
+                    <label for="parentPhone">Parent Phone Number</label>
+                    <input type="text" id="parentPhone" class="form-control" placeholder="e.g. +1234567890">
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" id="closeModalBtn">Cancel</button>
-                    <button type="submit" class="action-btn-primary">Commit Record</button>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitFormBtn">Create Record</button>
                 </div>
             </form>
         </div>
@@ -121,236 +292,185 @@
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     <script>
-document.addEventListener("DOMContentLoaded", () => {
-    loadStudentsRoster();
-    setupModalTriggers();
-});
+        let studentsCache = [];
+        const API_BASE = '/students';
 
-let editingStudentId = null;
+        document.addEventListener("DOMContentLoaded", () => {
+            setupProfileMenuToggle();
+            fetchStudents();
+        });
 
-/* ==========================
-   LOAD STUDENTS
-========================== */
-async function loadStudentsRoster() {
-    try {
-        const res = await fetch('/students');
-        const data = await res.json();
+        // Topbar Profile Menu Trigger
+        function setupProfileMenuToggle() {
+            const trigger = document.getElementById('profilePillTrigger');
+            const menu = document.getElementById('profileDropdownMenu');
+            if (trigger && menu) {
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    menu.classList.toggle('active');
+                });
+                document.addEventListener('click', () => menu.classList.remove('active'));
+            }
+        }
 
-        const tbody =
-            document.querySelector("#studentsDirectoryTable tbody");
+        // READ: Fetch system roster lists
+        function fetchStudents() {
+            fetch(API_BASE)
+                .then(res => {
+                    if (!res.ok) throw new Error('Transaction execution failure.');
+                    return res.json();
+                })
+                .then(data => {
+                    studentsCache = data.students || data;
+                    renderTable(studentsCache);
+                })
+                .catch(err => {
+                    console.error("Communication layer breakdown:", err);
+                    document.getElementById('studentTableBody').innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--color-absent, #ef4444);">Error processing system data framework entries.</td></tr>`;
+                });
+        }
 
-        tbody.innerHTML = "";
+        // CORE RENDER: Populate roster dataset with custom layout actions matching target UI rules
+        function renderTable(list) {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
 
-        if (data.status === "success" && data.students) {
-
-            if (data.students.length === 0) {
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="6"
-                        style="text-align:center">
-                        No students found
-                    </td>
-                </tr>`;
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No student profiles match the active search.</td></tr>`;
                 return;
             }
 
-            data.students.forEach(student => {
-
-                const row = document.createElement("tr");
-
-                row.innerHTML = `
-                    <td>${student.roll_number}</td>
-                    <td>${student.full_name}</td>
-                    <td>${student.class_name}</td>
-                    <td>${student.parent_email}</td>
-                    <td>${student.parent_phone || '-'}</td>
-                    <td>
-                        <button
-                            onclick="editStudent(${student.id})">
-                            Edit
-                        </button>
-
-                        <button
-                            onclick="deleteStudent(${student.id})">
-                            Delete
-                        </button>
-                    </td>
+            list.forEach(student => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>#${student.id}</strong></td>
+                        <td>${escapeHtml(student.full_name)}</td>
+                        <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${escapeHtml(student.roll_number)}</code></td>
+                        <td><span style="background: #3b82f615; color: var(--color-students, #3b82f6); padding: 4px 8px; border-radius: 4px; font-weight: 500; font-size: 0.8rem;">${escapeHtml(student.class_name)}</span></td>
+                        <td>${student.parent_email ? escapeHtml(student.parent_email) : '<em style="color: var(--text-muted);">None</em>'}</td>
+                        <td>${student.parent_phone ? escapeHtml(student.parent_phone) : '<em style="color: var(--text-muted);">None</em>'}</td>
+                        <td style="text-align: center;">
+                            <div class="action-btn-group">
+                                <button class="btn-icon-edit" onclick="openEditModal(${student.id}, '${escapeHtml(student.full_name)}', '${escapeHtml(student.roll_number)}', '${escapeHtml(student.class_name)}', '${escapeHtml(student.parent_email || '')}', '${escapeHtml(student.parent_phone || '')}')" title="Edit Profile">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button class="btn-icon-delete" onclick="deleteStudentConfirm(${student.id})" title="Delete Account Profile">
+                                    <i class="fa-solid fa-user-minus"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 `;
-
-                tbody.appendChild(row);
             });
         }
 
-    } catch(error) {
-        console.error(error);
-    }
-}
+        // FILTER: Client-side search interface handling match operations
+        document.getElementById('studentSearch').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            const filtered = studentsCache.filter(s => 
+                s.full_name.toLowerCase().includes(query) || 
+                s.roll_number.toLowerCase().includes(query) ||
+                s.class_name.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        });
 
-/* ==========================
-   EDIT STUDENT
-========================== */
-async function editStudent(id) {
-
-    try {
-
-        const res = await fetch(`/students/${id}`);
-        const data = await res.json();
-
-        if (data.status !== "success") {
-            alert(data.message);
-            return;
+        // MODAL INTERFACE MANAGER
+        function openAddModal() {
+            document.getElementById('studentForm').reset();
+            document.getElementById('studentId').value = '';
+            document.getElementById('modalTitle').textContent = 'Add New Student Profile';
+            document.getElementById('submitFormBtn').textContent = 'Create Record';
+            document.getElementById('studentModal').classList.add('active');
         }
 
-        const student = data.student;
+        function openEditModal(id, name, roll, className, pEmail, pPhone) {
+            document.getElementById('studentId').value = id;
+            document.getElementById('fullName').value = name;
+            document.getElementById('rollNumber').value = roll;
+            document.getElementById('className').value = className;
+            document.getElementById('parentEmail').value = pEmail;
+            document.getElementById('parentPhone').value = pPhone;
+            
+            document.getElementById('modalTitle').textContent = 'Modify Student Profile';
+            document.getElementById('submitFormBtn').textContent = 'Save Changes';
+            document.getElementById('studentModal').classList.add('active');
+        }
 
-        document.getElementById("inp_name").value =
-            student.full_name;
+        function closeModal() {
+            document.getElementById('studentModal').classList.remove('active');
+        }
 
-        document.getElementById("inp_roll").value =
-            student.roll_number;
+        // CREATE / UPDATE: Multi-action form submission logic handling routing parameters
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('studentId').value;
+            const payload = {
+                full_name: document.getElementById('fullName').value,
+                roll_number: document.getElementById('rollNumber').value,
+                class_name: document.getElementById('className').value,
+                parent_email: document.getElementById('parentEmail').value || null,
+                parent_phone: document.getElementById('parentPhone').value || null
+            };
 
-        document.getElementById("inp_class").value =
-            student.class_name;
+            const isEdit = id !== '';
+            const url = isEdit ? `${API_BASE}/${id}` : API_BASE;
+            const method = isEdit ? 'PUT' : 'POST';
 
-        document.getElementById("inp_email").value =
-            student.parent_email;
-
-        document.getElementById("inp_phone").value =
-            student.parent_phone || "";
-
-        editingStudentId = id;
-
-        document.querySelector(".modal-card h3")
-            .textContent = "Edit Student";
-
-        document.getElementById("studentFormModal")
-            .classList.add("show");
-
-    } catch(error) {
-        console.error(error);
-    }
-}
-
-/* ==========================
-   DELETE STUDENT
-========================== */
-async function deleteStudent(id) {
-
-    if (!confirm("Delete student?")) {
-        return;
-    }
-
-    try {
-
-        const res = await fetch(`/students/${id}`, {
-            method: "DELETE"
-        });
-
-        const data = await res.json();
-
-        alert(data.message);
-
-        loadStudentsRoster();
-
-    } catch(error) {
-        console.error(error);
-    }
-}
-
-/* ==========================
-   MODAL + FORM
-========================== */
-function setupModalTriggers() {
-
-    const modal =
-        document.getElementById("studentFormModal");
-
-    document.getElementById("openModalBtn")
-        .addEventListener("click", () => {
-
-            editingStudentId = null;
-
-            document.getElementById("addStudentForm")
-                .reset();
-
-            document.querySelector(".modal-card h3")
-                .textContent =
-                "Enroll New Student Entry";
-
-            modal.classList.add("show");
-        });
-
-    document.getElementById("closeModalBtn")
-        .addEventListener("click", () => {
-            modal.classList.remove("show");
-        });
-
-    document.getElementById("addStudentForm")
-        .addEventListener("submit", async (e) => {
-
-        e.preventDefault();
-
-        const payload = {
-            full_name:
-                document.getElementById("inp_name").value,
-
-            roll_number:
-                document.getElementById("inp_roll").value,
-
-            class_name:
-                document.getElementById("inp_class").value,
-
-            parent_email:
-                document.getElementById("inp_email").value,
-
-            parent_phone:
-                document.getElementById("inp_phone").value
-        };
-
-        try {
-
-            const url = editingStudentId
-                ? `/students/${editingStudentId}`
-                : "/students";
-
-            const method = editingStudentId
-                ? "PUT"
-                : "POST";
-
-            const res = await fetch(url, {
+            fetch(url, {
                 method: method,
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Transaction processing rejected.');
+                return res.json();
+            })
+            .then(data => {
+                if (data.status === 'success' || !data.status) {
+                    closeModal();
+                    fetchStudents(); 
+                } else {
+                    alert("Operation rejected: " + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Could not process transaction endpoint parameters safely.');
             });
-
-            const result = await res.json();
-
-            if (result.status === "success") {
-
-                modal.classList.remove("show");
-
-                document.getElementById("addStudentForm")
-                    .reset();
-
-                editingStudentId = null;
-
-                loadStudentsRoster();
-
-                alert(result.message);
-
-            } else {
-
-                alert(result.message);
-            }
-
-        } catch(error) {
-
-            console.error(error);
         }
-    });
-}
-</script>
+
+        // DELETE: Trace confirmation handling account profile drops
+        function deleteStudentConfirm(id) {
+            if (confirm("Are you sure you want to permanently delete this student record? This action cannot be reverted.")) {
+                fetch(`${API_BASE}/${id}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success' || !data.status) {
+                            fetchStudents();
+                        } else {
+                            alert("Deletion failed: " + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Error communicating with backend infrastructure.');
+                    });
+            }
+        }
+
+        // Escape helper securing layouts from text scripting vulnerabilities
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
 </body>
 </html>
