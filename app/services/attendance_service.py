@@ -134,8 +134,12 @@ def fetch_attendance():
 
     finally:
 
-        cursor.close()
-        db_conn.close()
+        if cursor:
+            cursor.close()
+
+        if db_conn:
+            db_conn.close()
+
 def fetch_absentees():
 
     try:
@@ -177,8 +181,11 @@ def fetch_absentees():
 
     finally:
 
-        cursor.close()
-        db_conn.close()
+        if cursor:
+            cursor.close()
+
+        if db_conn:
+            db_conn.close()
 
 def update_attendance(
     attendance_id,
@@ -221,8 +228,11 @@ def update_attendance(
 
     finally:
 
-        cursor.close()
-        db_conn.close()
+        if cursor:
+            cursor.close()
+
+        if db_conn:
+            db_conn.close()
 
 
 def delete_attendance(
@@ -261,5 +271,8 @@ def delete_attendance(
 
     finally:
 
-        cursor.close()
-        db_conn.close()
+        if cursor:
+            cursor.close()
+
+        if db_conn:
+            db_conn.close()

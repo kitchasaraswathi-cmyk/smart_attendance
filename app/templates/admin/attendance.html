@@ -1,0 +1,439 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Attendance Management - EduDash{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Section Headers matching system guidelines */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; }
+    .page-header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+    /* Action bar control configurations */
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg);
+        padding: 16px 24px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 24px;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .search-wrapper {
+        position: relative;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+    .search-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+    .search-input {
+        width: 100%;
+        padding: 10px 16px 10px 40px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        outline: none;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--color-attendance, #10b981); }
+    
+    /* Global Module Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border: none;
+        transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary { background-color: var(--color-attendance, #10b981); color: #ffffff; }
+    .btn-secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+
+    /* Custom Responsive Tables */
+    .table-container {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow-x: auto;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+    .custom-table th {
+        background-color: #f8fafc;
+        padding: 16px;
+        color: var(--text-muted);
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .custom-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+    .custom-table tr:last-child td { border-bottom: none; }
+    
+    /* Action Button layouts */
+    .action-btn-group {
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+    }
+    .btn-icon-edit {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 6px 10px;
+        border-radius: 6px;
+        color: var(--color-attendance, #10b981);
+        transition: background 0.2s;
+    }
+    .btn-icon-edit:hover { background: #ecfdf5; }
+
+    .btn-icon-delete {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 6px 10px;
+        border-radius: 6px;
+        color: var(--color-absent, #ef4444);
+        transition: background 0.2s;
+    }
+    .btn-icon-delete:hover { background: #fef2f2; }
+
+    /* Semantic Status Badges */
+    .badge-status {
+        display: inline-flex;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    .badge-present { background-color: #d1fae5; color: #065f46; }
+    .badge-absent { background-color: #fee2e2; color: #991b1b; }
+
+    /* Modal Architecture Overlay styling */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0; visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal-box {
+        background: var(--card-bg);
+        padding: 32px;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 460px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+    }
+    .modal-overlay.active .modal-box { transform: translateY(0); }
+    .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        outline: none;
+        font-size: 0.9rem;
+        background-color: #fff;
+    }
+    .form-control:focus { border-color: var(--color-attendance, #10b981); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Attendance Management</h1>
+        <p>Track daily physical presence records, modify database entry states, and audit rolls</p>
+    </div>
+</div>
+
+<div class="action-bar">
+    <div class="search-wrapper">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="attendanceSearch" class="search-input" placeholder="Search logs by student name, roll number, or status...">
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()">
+        <i class="fa-solid fa-plus"></i> Mark Attendance
+    </button>
+</div>
+
+<div class="table-container">
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student Name</th>
+                <th>Roll Number</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th style="text-align: center; width: 120px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="attendanceBody">
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted);">Syncing database records data...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="modal-overlay" id="attendanceModal">
+    <div class="modal-box">
+        <h3 class="modal-title" id="modalTitle">Mark Attendance Entry</h3>
+        <form id="attendanceForm" onsubmit="handleFormSubmit(event)">
+            <input type="hidden" id="entry_id">
+            
+            <div class="form-group">
+                <label for="student_id">Student ID</label>
+                <input type="number" id="student_id" class="form-control" placeholder="e.g. 104" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="attendance_date">Attendance Date</label>
+                <input type="date" id="attendance_date" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="status">Presence Status</label>
+                <select id="status" class="form-control" required>
+                    <option value="">Select Status</option>
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitFormBtn">Mark Attendance</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let attendanceCache = [];
+    const API_URL = '/attendance'; 
+
+    document.addEventListener("DOMContentLoaded", () => {
+        setDefaultDate();
+        fetchAttendance();
+    });
+
+    
+    function setDefaultDate() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('attendance_date').value = today;
+    }
+
+    
+    function fetchAttendance() {
+        fetch(API_URL)
+            .then(res => {
+                if (!res.ok) throw new Error('Data payload tracking interface rejected.');
+                return res.json();
+            })
+            .then(data => {
+                if (data.status === 'success' || Array.isArray(data)) {
+                    attendanceCache = data.attendance || data;
+                    renderTable(attendanceCache);
+                } else {
+                    alert("Database retrieval error: " + data.message);
+                }
+            })
+            .catch(err => {
+                console.error("Communication layer breakdown:", err);
+                document.getElementById('attendanceBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--color-absent, #ef4444);">Error processing system data framework entries.</td></tr>`;
+            });
+    }
+
+    
+    function renderTable(list) {
+        const tbody = document.getElementById('attendanceBody');
+        tbody.innerHTML = '';
+
+        if (!list || list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No attendance records match your active view criteria.</td></tr>`;
+            return;
+        }
+
+        list.forEach(record => {
+            const dateStr = record.attendance_date ? new Date(record.attendance_date).toLocaleDateString() : 'N/A';
+            const statusClass = record.status === 'present' ? 'badge-present' : 'badge-absent';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>#${record.id}</strong></td>
+                    <td>${escapeHtml(record.full_name || 'Student #' + record.student_id)}</td>
+                    <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${escapeHtml(record.roll_number || 'N/A')}</code></td>
+                    <td>${dateStr}</td>
+                    <td><span class="badge-status ${statusClass}">${record.status}</span></td>
+                    <td style="text-align: center;">
+                        <div class="action-btn-group">
+                            <button class="btn-icon-edit" onclick="openEditModal(${record.id}, ${record.student_id}, '${record.attendance_date}', '${record.status}')" title="Edit Entry Status">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-icon-delete" onclick="deleteAttendanceConfirm(${record.id})" title="Purge Metric Record">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    
+    document.getElementById('attendanceSearch').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const filtered = attendanceCache.filter(r => 
+            (r.full_name && r.full_name.toLowerCase().includes(query)) || 
+            (r.roll_number && r.roll_number.toLowerCase().includes(query)) ||
+            (r.status && r.status.toLowerCase().includes(query))
+        );
+        renderTable(filtered);
+    });
+
+    
+    function openAddModal() {
+        document.getElementById('attendanceForm').reset();
+        document.getElementById('entry_id').value = '';
+        setDefaultDate();
+        document.getElementById('modalTitle').textContent = 'Mark Attendance Entry';
+        document.getElementById('submitFormBtn').textContent = 'Mark Attendance';
+        document.getElementById('attendanceModal').classList.add('active');
+    }
+
+    function openEditModal(id, studentId, date, status) {
+        document.getElementById('entry_id').value = id;
+        document.getElementById('student_id').value = studentId;
+        
+        // Formats complex timestamp data to clean string inputs if required
+        if(date.includes('T')) date = date.split('T')[0];
+        document.getElementById('attendance_date').value = date;
+        
+        document.getElementById('status').value = status;
+
+        document.getElementById('modalTitle').textContent = 'Modify Attendance Record';
+        document.getElementById('submitFormBtn').textContent = 'Save Changes';
+        document.getElementById('attendanceModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('attendanceModal').classList.remove('active');
+    }
+
+    
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('entry_id').value;
+        const payload = {
+            student_id: parseInt(document.getElementById('student_id').value),
+            attendance_date: document.getElementById('attendance_date').value,
+            status: document.getElementById('status').value
+        };
+
+        const isEdit = id !== '';
+        const url = isEdit ? `${API_URL}/${id}` : API_URL;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Transaction execution parameters rejected.');
+            return res.json();
+        })
+        .then(data => {
+            if (data.status === 'success' || !data.status) {
+                closeModal();
+                fetchAttendance();
+            } else {
+                alert("Operation failure: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error updating attendance records parameters.');
+        });
+    }
+
+    
+    function deleteAttendanceConfirm(id) {
+        if (confirm("Are you sure you want to delete this specific log record metrics item?")) {
+            fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' || !data.status) {
+                        fetchAttendance();
+                    } else {
+                        alert("Deletion failed: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error communicating with infrastructure layer nodes.');
+                });
+        }
+    }
+
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{% endblock %}
