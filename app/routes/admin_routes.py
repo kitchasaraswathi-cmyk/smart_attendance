@@ -89,6 +89,16 @@ def students_page():
 
     return render_template('admin/students.html')
 
+@admin_bp.route('/admin/attendance-page')
+def attendance_page():
+
+    if not admin_required():
+        return redirect('/login')
+
+    return render_template(
+        'admin/attendance.html'
+    )
+
 
 
 

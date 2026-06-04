@@ -179,3 +179,87 @@ def fetch_absentees():
 
         cursor.close()
         db_conn.close()
+
+def update_attendance(
+    attendance_id,
+    data
+):
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor()
+
+        query = """
+            UPDATE attendance
+            SET status=%s
+            WHERE id=%s
+        """
+
+        cursor.execute(
+            query,
+            (
+                data["status"],
+                attendance_id
+            )
+        )
+
+        db_conn.commit()
+
+        return {
+            "status": "success",
+            "message": "Attendance updated successfully"
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+    finally:
+
+        cursor.close()
+        db_conn.close()
+
+
+def delete_attendance(
+    attendance_id
+):
+
+    try:
+
+        db_conn = get_db_connection()
+
+        cursor = db_conn.cursor()
+
+        query = """
+            DELETE FROM attendance
+            WHERE id=%s
+        """
+
+        cursor.execute(
+            query,
+            (attendance_id,)
+        )
+
+        db_conn.commit()
+
+        return {
+            "status": "success",
+            "message": "Attendance deleted successfully"
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+    finally:
+
+        cursor.close()
+        db_conn.close()
