@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from app.routes.auth_routes import auth_bp
 from app.routes.attendance_routes import attendance_bp
 from app.routes.dashboard_routes import dashboard_bp
+from app.routes.admin_routes import admin_bp
 
 from app.database import get_db_connection
 from app.extensions import mail
@@ -68,6 +69,8 @@ def create_app():
     app.register_blueprint(student_bp)
     app.register_blueprint(attendance_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(admin_bp)
+
     mail.init_app(app)
 
     return app
