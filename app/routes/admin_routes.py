@@ -81,6 +81,14 @@ def analytics_page():
 
     return render_template('admin/analytics.html')
 
+@admin_bp.route('/admin/students-page')
+def students_page():
+
+    if not admin_required():
+        return redirect('/login')
+
+    return render_template('admin/students.html')
+
 
 
 
