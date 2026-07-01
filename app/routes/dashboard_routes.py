@@ -29,6 +29,11 @@ dashboard_bp = Blueprint(
 def teacher_dashboard():
     return render_template('teacher/dashboard.html')
 
+
+@dashboard_bp.route('/parent-dashboard', methods=["GET"])
+def parent_dashboard():
+    return render_template('parent/dashboard.html')
+
 @dashboard_bp.route('/teacher/students', methods=["GET"])
 def teacher_students_page():
     # FIXED: Added the missing route for your students control panel file
